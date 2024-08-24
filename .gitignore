@@ -1,0 +1,6 @@
+# Don't save build directory
+/target
+
+# Don't save generated testing directory
+/run
+
