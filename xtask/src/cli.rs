@@ -11,41 +11,6 @@ pub enum Action {
     },
 }
 
-/// The architectures supported by the kernel.
-#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
-pub enum Arch {
-    /// The `x86_64` architecture.
-    X86_64,
-}
-
-impl Arch {
-    /// Returns the [`Arch`] as its rustc target triple.
-    pub fn as_target_triple(&self) -> &'static str {
-        match self {
-            Self::X86_64 => "x86_64-unknown-none",
-        }
-    }
-
-    /// Returns the [`Arch`] as its textual representation.
-    pub fn as_str(&self) -> &'static str {
-        match self {
-            Self::X86_64 => "x86_64",
-        }
-    }
-}
-
-impl clap::ValueEnum for Arch {
-    fn value_variants<'a>() -> &'a [Self] {
-        static ARCHES: &[Arch] = &[Arch::X86_64];
-
-        ARCHES
-    }
-
-    fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
-        Some(clap::builder::PossibleValue::new(self.as_str()))
-    }
-}
-
 /// Parses arguments to construct an [`Action`].
 pub fn parse_arguments() -> Action {
     let mut matches = command_parser().get_matches();
@@ -90,4 +55,39 @@ pub fn command_parser() -> clap::Command {
         .subcommand(build_subcommand)
         .subcommand_required(true)
         .arg_required_else_help(true)
+}
+
+/// The architectures supported by the kernel.
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq)]
+pub enum Arch {
+    /// The `x86_64` architecture.
+    X86_64,
+}
+
+impl Arch {
+    /// Returns the [`Arch`] as its rustc target triple.
+    pub fn as_target_triple(&self) -> &'static str {
+        match self {
+            Self::X86_64 => "x86_64-unknown-none",
+        }
+    }
+
+    /// Returns the [`Arch`] as its textual representation.
+    pub fn as_str(&self) -> &'static str {
+        match self {
+            Self::X86_64 => "x86_64",
+        }
+    }
+}
+
+impl clap::ValueEnum for Arch {
+    fn value_variants<'a>() -> &'a [Self] {
+        static ARCHES: &[Arch] = &[Arch::X86_64];
+
+        ARCHES
+    }
+
+    fn to_possible_value(&self) -> Option<clap::builder::PossibleValue> {
+        Some(clap::builder::PossibleValue::new(self.as_str()))
+    }
 }
