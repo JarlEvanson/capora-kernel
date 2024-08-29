@@ -21,6 +21,8 @@ pub enum Action {
         ovmf_code: PathBuf,
         /// The path to the OVMF vars file used to run UEFI.
         ovmf_vars: PathBuf,
+        /// The path to the Limine bootloader.
+        limine_path: PathBuf,
     },
 }
 
@@ -58,12 +60,14 @@ pub fn parse_run_arguments(mut matches: clap::ArgMatches) -> Action {
     let ovmf_vars = matches
         .remove_one("ovmf-vars")
         .expect("ovmf-vars is required");
+    let limine_path = matches.remove_one("limine").expect("limine is required");
 
     Action::Run {
         arch,
         release,
         ovmf_code,
         ovmf_vars,
+        limine_path,
     }
 }
 
@@ -104,6 +108,13 @@ pub fn command_parser() -> clap::Command {
             clap::Arg::new("ovmf-vars")
                 .long("ovmf-vars")
                 .short('v')
+                .value_parser(clap::builder::PathBufValueParser::new())
+                .required(true),
+        )
+        .arg(
+            clap::Arg::new("limine")
+                .long("limine")
+                .short('l')
                 .value_parser(clap::builder::PathBufValueParser::new())
                 .required(true),
         );
