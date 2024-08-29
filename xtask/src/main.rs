@@ -14,6 +14,7 @@ fn main() {
                 eprintln!("{error:?}");
             }
         },
+        Action::Run { arch, release, ovmf_code, ovmf_vars } => todo!(),
     };
 }
 

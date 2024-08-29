@@ -1,5 +1,7 @@
 //! Command line parsing and command construction.
 
+use std::path::PathBuf;
+
 /// The action to carry out.
 pub enum Action {
     /// Build the Capora kernel.
@@ -8,6 +10,17 @@ pub enum Action {
         arch: Arch,
         /// Whether the Capora kernel should be built in release mode.
         release: bool,
+    },
+    /// Build and run the Capora kernel.
+    Run {
+        /// The architecture for which the kernel should be built and kernel executed.
+        arch: Arch,
+        /// Whether the Capora kernel should be built in release mode.
+        release: bool,
+        /// The path to the OVMF code file used to run UEFI.
+        ovmf_code: PathBuf,
+        /// The path to the OVMF vars file used to run UEFI.
+        ovmf_vars: PathBuf,
     },
 }
 
@@ -18,6 +31,7 @@ pub fn parse_arguments() -> Action {
         matches.remove_subcommand().expect("subcommand required");
     match subcommand_name.as_str() {
         "build" => parse_build_arguments(subcommand_matches),
+        "run" => parse_run_arguments(subcommand_matches),
         name => unreachable!("unexpected subcommand {name:?}"),
     }
 }
@@ -30,6 +44,27 @@ pub fn parse_build_arguments(mut matches: clap::ArgMatches) -> Action {
     let release = matches.remove_one::<bool>("release").unwrap_or(false);
 
     Action::Build { arch, release }
+}
+
+/// Parses subcommand arguments for the [`Action::Run`] subcommand.
+pub fn parse_run_arguments(mut matches: clap::ArgMatches) -> Action {
+    let arch = matches
+        .remove_one::<Arch>("arch")
+        .expect("arch is a required argument");
+    let release = matches.remove_one::<bool>("release").unwrap_or(false);
+    let ovmf_code = matches
+        .remove_one("ovmf-code")
+        .expect("ovmf-code is required");
+    let ovmf_vars = matches
+        .remove_one("ovmf-vars")
+        .expect("ovmf-vars is required");
+
+    Action::Run {
+        arch,
+        release,
+        ovmf_code,
+        ovmf_vars,
+    }
 }
 
 /// Returns the clap command parser.
@@ -47,12 +82,36 @@ pub fn command_parser() -> clap::Command {
 
     let build_subcommand = clap::Command::new("build")
         .about("build the Capora kernel")
-        .arg(arch_arg.help("The architecture for which the kernel should be built"))
-        .arg(release_arg);
+        .arg(
+            arch_arg
+                .clone()
+                .help("The architecture for which the kernel should be built"),
+        )
+        .arg(release_arg.clone());
+
+    let run_subcommand = clap::Command::new("run")
+        .about("Run the Capora kernel")
+        .arg(arch_arg.help("The architecture for which the kernel should be built and run"))
+        .arg(release_arg)
+        .arg(
+            clap::Arg::new("ovmf-code")
+                .long("ovmf-code")
+                .short('c')
+                .value_parser(clap::builder::PathBufValueParser::new())
+                .required(true),
+        )
+        .arg(
+            clap::Arg::new("ovmf-vars")
+                .long("ovmf-vars")
+                .short('v')
+                .value_parser(clap::builder::PathBufValueParser::new())
+                .required(true),
+        );
 
     clap::Command::new("xtask")
         .about("Developer utility for running various tasks in capora-kernel")
         .subcommand(build_subcommand)
+        .subcommand(run_subcommand)
         .subcommand_required(true)
         .arg_required_else_help(true)
 }
