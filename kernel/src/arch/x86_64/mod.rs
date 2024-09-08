@@ -2,3 +2,4 @@
 
 mod boot;
 mod memory;
+mod structures;
