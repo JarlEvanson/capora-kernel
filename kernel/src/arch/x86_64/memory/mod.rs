@@ -159,7 +159,7 @@ impl VirtualAddress {
 
 impl fmt::Debug for VirtualAddress {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
-        f.debug_tuple("PhysicalAddress")
+        f.debug_tuple("VirtualAddress")
             .field(&(self.0 as *const u8))
             .finish()
     }
