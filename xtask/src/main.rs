@@ -2,25 +2,23 @@
 
 use std::{ffi::OsString, fmt, path::PathBuf};
 
-use cli::{parse_arguments, Action, Arch};
+use cli::{parse_arguments, Action, Arch, BuildArguments, RunArguments};
 
 pub mod cli;
 
 fn main() {
     match parse_arguments() {
-        Action::Build { arch, release } => match build(arch, release) {
+        Action::Build(args) => match build(args) {
             Ok(path) => println!("kernel located at \"{}\"", path.display()),
             Err(error) => {
                 eprintln!("{error:?}");
             }
         },
         Action::Run {
-            arch,
-            release,
-            ovmf_code,
-            ovmf_vars,
+            build_arguments,
+            run_arguments,
             limine_path,
-        } => match run(arch, release, ovmf_code, ovmf_vars, limine_path) {
+        } => match run(build_arguments, run_arguments, limine_path) {
             Ok(_) => {}
             Err(error) => {
                 eprintln!("{error}");
@@ -30,20 +28,25 @@ fn main() {
 }
 
 /// Builds the Capora kernel.
-pub fn build(arch: Arch, release: bool) -> Result<PathBuf, BuildError> {
+pub fn build(arguments: BuildArguments) -> Result<PathBuf, BuildError> {
     let mut cmd = std::process::Command::new("cargo");
     cmd.arg("build");
     cmd.args(["--package", "kernel"]);
 
-    cmd.args(["--target", arch.as_target_triple()]);
-    if release {
+    cmd.args(["--target", arguments.arch.as_target_triple()]);
+    if arguments.release {
         cmd.arg("--release");
+    }
+
+    let features = arguments.features.as_string();
+    if features.len() != 0 {
+        cmd.arg("--features").arg(features);
     }
 
     let mut binary_location = PathBuf::with_capacity(50);
     binary_location.push("target");
-    binary_location.push(arch.as_target_triple());
-    if release {
+    binary_location.push(arguments.arch.as_target_triple());
+    if arguments.release {
         binary_location.push("release");
     } else {
         binary_location.push("debug");
@@ -95,17 +98,15 @@ impl fmt::Display for BuildError {
 
 /// Builds and runs the Capora kernel.
 pub fn run(
-    arch: Arch,
-    release: bool,
-    ovmf_code: PathBuf,
-    ovmf_vars: PathBuf,
+    build_args: BuildArguments,
+    run_args: RunArguments,
     limine_path: PathBuf,
 ) -> Result<(), RunError> {
-    let kernel_path = build(arch, release)?;
-    let fat_directory = build_fat_directory(arch, kernel_path, limine_path)
+    let kernel_path = build(build_args)?;
+    let fat_directory = build_fat_directory(build_args.arch, kernel_path, limine_path)
         .map_err(RunError::BuildFatDirectoryError)?;
 
-    let qemu_name = match arch {
+    let qemu_name = match build_args.arch {
         Arch::X86_64 => "qemu-system-x86_64",
     };
 
@@ -115,7 +116,7 @@ pub fn run(
     cmd.arg("-nodefaults");
 
     cmd.args(["-boot", "menu=on,splash-time=0"]);
-    match arch {
+    match build_args.arch {
         Arch::X86_64 => {
             // Use fairly modern machine to target.
             cmd.args(["-machine", "q35"]);
@@ -133,11 +134,11 @@ pub fn run(
     }
 
     let mut ovmf_code_arg = OsString::from("if=pflash,format=raw,readonly=on,file=");
-    ovmf_code_arg.push(ovmf_code);
+    ovmf_code_arg.push(run_args.ovmf_code);
     cmd.arg("-drive").arg(ovmf_code_arg);
 
     let mut ovmf_vars_arg = OsString::from("if=pflash,format=raw,readonly=on,file=");
-    ovmf_vars_arg.push(ovmf_vars);
+    ovmf_vars_arg.push(run_args.ovmf_vars);
     cmd.arg("-drive").arg(ovmf_vars_arg);
 
     let mut fat_drive_arg = OsString::from("format=raw,file=fat:rw:");
