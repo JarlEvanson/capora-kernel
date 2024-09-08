@@ -5,6 +5,7 @@
 
 pub mod arch;
 pub mod cells;
+pub mod spinlock;
 
 /// The architecture independent kernel entry point for the primary CPU.
 ///
