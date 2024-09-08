@@ -11,3 +11,6 @@ workspace = true
 
 [dependencies]
 clap = "4.5.16"
+
+boot-stub = { git = "https://github.com/JarlEvanson/capora-boot-stub.git", artifact = "bin", target = "x86_64-unknown-uefi" }
+config = { git = "https://github.com/JarlEvanson/capora-boot-stub.git", artifact = "bin", features = [ "ctl" ] }
