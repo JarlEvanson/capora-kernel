@@ -3,8 +3,8 @@
 #![no_std]
 #![no_main]
 
-pub mod cells;
 pub mod arch;
+pub mod cells;
 
 /// The architecture independent kernel entry point for the primary CPU.
 ///

@@ -8,3 +8,12 @@ repository.workspace = true
 
 [lints]
 workspace = true
+
+[features]
+default = [ "capora-boot-api", "limine-boot-api" ]
+
+capora-boot-api = ["dep:boot-api"]
+limine-boot-api = []
+
+[dependencies]
+boot-api = { git = "https://github.com/JarlEvanson/capora-boot-api.git", optional = true }

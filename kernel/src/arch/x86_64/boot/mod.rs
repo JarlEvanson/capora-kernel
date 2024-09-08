@@ -3,8 +3,10 @@
 
 use crate::kmain;
 
-/// The entry point for `x86_64` specific setup.
-#[export_name = "_start"]
-pub unsafe extern "C" fn karchmain() -> ! {
+#[cfg(feature = "capora-boot-api")]
+pub mod capora_boot_stub;
+
+/// The entry point for bootloader-independent `x86_64` specific setup.
+pub fn karchmain() -> ! {
     kmain()
 }

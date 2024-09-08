@@ -52,6 +52,11 @@ dependencies = [
 ]
 
 [[package]]
+name = "boot-api"
+version = "0.1.0"
+source = "git+https://github.com/JarlEvanson/capora-boot-api.git#fbc3c1507dbe7754d238f597c382ed6926c2f00c"
+
+[[package]]
 name = "clap"
 version = "4.5.16"
 source = "registry+https://github.com/rust-lang/crates.io-index"
@@ -93,6 +98,9 @@ checksum = "7943c866cc5cd64cbc25b2e01621d07fa8eb2a1a23160ee81ce38704e97b8ecf"
 [[package]]
 name = "kernel"
 version = "0.1.0"
+dependencies = [
+ "boot-api",
+]
 
 [[package]]
 name = "strsim"
