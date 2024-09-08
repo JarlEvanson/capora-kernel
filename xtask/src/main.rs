@@ -277,6 +277,8 @@ pub fn run(
     cmd.args(["-serial", "file:run/x86_64/serial.txt"]);
     cmd.args(["-D", "run/x86_64/logfile.txt"]);
 
+    cmd.args(["-monitor", "stdio"]);
+
     run_cmd(cmd)?;
 
     Ok(())
