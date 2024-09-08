@@ -71,7 +71,7 @@ source = "git+https://github.com/JarlEvanson/capora-boot-api.git#fbc3c1507dbe775
 [[package]]
 name = "boot-stub"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#5d407ad7fe2c28944e2498603857eb6d94f6a49b"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
 dependencies = [
  "boot-api",
  "config",
@@ -121,7 +121,7 @@ checksum = "d3fd119d74b830634cea2a0f58bbd0d54540518a14397557951e79340abc28c0"
 [[package]]
 name = "config"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#5d407ad7fe2c28944e2498603857eb6d94f6a49b"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
 dependencies = [
  "clap",
  "config-raw",
@@ -131,12 +131,12 @@ dependencies = [
 [[package]]
 name = "config-raw"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#5d407ad7fe2c28944e2498603857eb6d94f6a49b"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
 
 [[package]]
 name = "elf"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-elf.git#990466d1fb7013644e182b6aa8d3ec6b20a71001"
+source = "git+https://github.com/JarlEvanson/capora-elf.git?rev=a5977e37a33d6c92146b2fb4b8d48ae4ca77a6f7#a5977e37a33d6c92146b2fb4b8d48ae4ca77a6f7"
 
 [[package]]
 name = "errno"
