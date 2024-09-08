@@ -1,6 +1,7 @@
 //! Module controlling definitions and interfaces to interact with basic system structures.
 
 pub mod gdt;
+pub mod idt;
 
 /// The privilege level associated with an item.
 pub enum PrivilegeLevel {
