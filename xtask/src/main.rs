@@ -31,7 +31,12 @@ fn main() {
         Action::RunBootStub {
             build_arguments,
             run_arguments,
-        } => todo!(),
+        } => match run_boot_stub(build_arguments, run_arguments) {
+            Ok(_) => {}
+            Err(error) => {
+                eprintln!("{error}");
+            }
+        },
     };
 }
 
@@ -110,7 +115,8 @@ pub fn run_limine(
     Ok(())
 }
 
-/// Various errors that can occur while building and running the Capora kernel.
+/// Various errors that can occur while building and running the Capora kernel using the Limine
+/// bootloader.
 #[derive(Debug)]
 pub enum RunLimineError {
     /// An error occurred while building the kernel.
@@ -145,6 +151,82 @@ impl fmt::Display for RunLimineError {
     }
 }
 
+/// Builds and runs the Capora kernel using `capora-boot-stub`.
+pub fn run_boot_stub(
+    build_args: BuildArguments,
+    run_args: RunArguments,
+) -> Result<(), RunBootStubError> {
+    let kernel_path = build(build_args)?;
+    let fat_directory = build_fat_directory(
+        build_args.arch,
+        PathBuf::from(env!("CARGO_BIN_FILE_BOOT_STUB_boot-stub")),
+        &[],
+        &[],
+    )
+    .map_err(RunBootStubError::BuildFatDirectoryError)?;
+
+    let mut cmd = std::process::Command::new(env!("CARGO_BIN_FILE_CONFIG_capora-boot-stub-ctl"));
+    cmd.arg("configure");
+
+    cmd.arg("--stub")
+        .arg(fat_directory.join("EFI").join("BOOT").join("BOOTX64.EFI"));
+    cmd.arg("--application")
+        .arg(format!("kernel:embedded:{}", kernel_path.display()));
+
+    run_cmd(cmd)?;
+
+    run(build_args, run_args, fat_directory)?;
+
+    Ok(())
+}
+
+/// Various errors that can occur while building and running the Capora kernel using
+/// `capora-boot-stub`.
+pub enum RunBootStubError {
+    /// An error ocurred while building the kernel.
+    BuildError(BuildError),
+    /// An error occurred while building the fat directory.
+    BuildFatDirectoryError(std::io::Error),
+    /// An error occurred while configuring `capora-boot-stub`.
+    ConfigureError(RunCommandError),
+    /// An error occurred while running QEMU.
+    QemuError(QemuError),
+}
+
+impl From<BuildError> for RunBootStubError {
+    fn from(value: BuildError) -> Self {
+        Self::BuildError(value)
+    }
+}
+
+impl From<RunCommandError> for RunBootStubError {
+    fn from(value: RunCommandError) -> Self {
+        Self::ConfigureError(value)
+    }
+}
+
+impl From<QemuError> for RunBootStubError {
+    fn from(value: QemuError) -> Self {
+        Self::QemuError(value)
+    }
+}
+
+impl fmt::Display for RunBootStubError {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Self::BuildError(error) => fmt::Display::fmt(error, f),
+            Self::BuildFatDirectoryError(error) => {
+                write!(f, "error occurred while building FAT directory: {error}",)
+            }
+            Self::ConfigureError(error) => write!(
+                f,
+                "error occurred while configuring `capora-boot-stub`: {error}"
+            ),
+            Self::QemuError(error) => fmt::Display::fmt(error, f),
+        }
+    }
+}
+
 /// Builds and runs the Capora kernel.
 pub fn run(
     build_args: BuildArguments,
@@ -165,6 +247,7 @@ pub fn run(
         Arch::X86_64 => {
             // Use fairly modern machine to target.
             cmd.args(["-machine", "q35"]);
+            cmd.args(["-cpu", "host,rdrand=on"]);
 
             // Allocate some memory.
             cmd.args(["-m", "256M"]);
