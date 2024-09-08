@@ -11,14 +11,21 @@ use clap::ArgAction;
 pub enum Action {
     /// Build the Capora kernel.
     Build(BuildArguments),
-    /// Build and run the Capora kernel.
-    Run {
+    /// Build and run the Capora kernel using Limine.
+    RunLimine {
         /// Arguments necessary to build the Capora kernel.
         build_arguments: BuildArguments,
         /// Arguments necessary to run the Capora kernel.
         run_arguments: RunArguments,
         /// The path to the Limine bootloader.
         limine_path: PathBuf,
+    },
+    /// Build and run the Capora kernel using `capora-boot-stub`.
+    RunBootStub {
+        /// Arguments necessary to build the Capora kernel.
+        build_arguments: BuildArguments,
+        /// Argument necessary to run the Capora kernel.
+        run_arguments: RunArguments,
     },
 }
 
@@ -48,12 +55,16 @@ pub fn parse_arguments() -> Action {
         matches.remove_subcommand().expect("subcommand required");
     match subcommand_name.as_str() {
         "build" => Action::Build(parse_build_arguments(&mut subcommand_matches)),
-        "run" => Action::Run {
+        "run-limine" => Action::RunLimine {
             build_arguments: parse_build_arguments(&mut subcommand_matches),
             run_arguments: parse_run_arguments(&mut subcommand_matches),
             limine_path: subcommand_matches
                 .remove_one("limine")
                 .expect("limine is required"),
+        },
+        "run-boot-stub" => Action::RunBootStub {
+            build_arguments: parse_build_arguments(&mut subcommand_matches),
+            run_arguments: parse_run_arguments(&mut subcommand_matches),
         },
         name => unreachable!("unexpected subcommand {name:?}"),
     }
@@ -144,25 +155,29 @@ pub fn command_parser() -> clap::Command {
         .arg(release_arg.clone())
         .arg(features_arg.clone());
 
-    let run_subcommand = clap::Command::new("run")
-        .about("Run the Capora kernel")
-        .arg(arch_arg.help("The architecture for which the kernel should be built and run"))
-        .arg(release_arg)
-        .arg(features_arg)
+    let ovmf_code_arg = clap::Arg::new("ovmf-code")
+        .long("ovmf-code")
+        .short('c')
+        .value_parser(clap::builder::PathBufValueParser::new())
+        .required(true);
+
+    let ovmf_vars_arg = clap::Arg::new("ovmf-vars")
+        .long("ovmf-vars")
+        .short('v')
+        .value_parser(clap::builder::PathBufValueParser::new())
+        .required(true);
+
+    let run_limine_subcommand = clap::Command::new("run-limine")
+        .about("Run the Capora kernel using the Limine bootloader")
         .arg(
-            clap::Arg::new("ovmf-code")
-                .long("ovmf-code")
-                .short('c')
-                .value_parser(clap::builder::PathBufValueParser::new())
-                .required(true),
+            arch_arg
+                .clone()
+                .help("The architecture for which the kernel should be built and run"),
         )
-        .arg(
-            clap::Arg::new("ovmf-vars")
-                .long("ovmf-vars")
-                .short('v')
-                .value_parser(clap::builder::PathBufValueParser::new())
-                .required(true),
-        )
+        .arg(release_arg.clone())
+        .arg(features_arg.clone())
+        .arg(ovmf_code_arg.clone())
+        .arg(ovmf_vars_arg.clone())
         .arg(
             clap::Arg::new("limine")
                 .long("limine")
@@ -171,10 +186,19 @@ pub fn command_parser() -> clap::Command {
                 .required(true),
         );
 
+    let run_boot_stub_subcommand = clap::Command::new("run-boot-stub")
+        .about("Run the capora-kernel using `capora boot stub`")
+        .arg(arch_arg.help("The architecture for which the kernel should be built and run"))
+        .arg(release_arg)
+        .arg(features_arg)
+        .arg(ovmf_code_arg)
+        .arg(ovmf_vars_arg);
+
     clap::Command::new("xtask")
         .about("Developer utility for running various tasks in capora-kernel")
         .subcommand(build_subcommand)
-        .subcommand(run_subcommand)
+        .subcommand(run_limine_subcommand)
+        .subcommand(run_boot_stub_subcommand)
         .subcommand_required(true)
         .arg_required_else_help(true)
 }
