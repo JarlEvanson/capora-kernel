@@ -12,16 +12,26 @@ PHDRS {
 }
 
 SECTIONS {
-    .rodata ALIGN(CONSTANT(COMMONPAGESIZE)) : {
+    . = ALIGN(CONSTANT(COMMONPAGESIZE));
+
+    .rodata : {
         *(.rodata .rodata.*)
     } :rodata
 
-    .text ALIGN(CONSTANT(COMMONPAGESIZE)) : {
+    . = ALIGN(CONSTANT(COMMONPAGESIZE));
+
+    .text : {
         *(.text .text.*)
     } :text
 
-    .data ALIGN(CONSTANT(COMMONPAGESIZE)) : {
+    . = ALIGN(CONSTANT(COMMONPAGESIZE));
+
+    .data : {
         *(.data .data.*)
+    } :data
+
+    .limine_requests : {
+        KEEP(*(.limine_requests))
     } :data
 
     .bss : {

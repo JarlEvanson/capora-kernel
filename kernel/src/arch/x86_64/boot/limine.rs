@@ -13,19 +13,25 @@ pub const LIMINE_MAGIC_1: u64 = 0x0a82e883a194f07b;
 /// A tag indicating that this executable uses the Limine boot protocol and that it supports
 /// [`LIMINE_BASE_REVISION`].
 #[used]
-#[no_mangle]
+#[link_section = ".limine_requests"]
 static LIMINE_BASE_REVISION_TAG: ControlledModificationCell<[u64; 3]> =
     ControlledModificationCell::new([0xf9562b2d5c95a6c8, 0x6a7b384944536bdc, LIMINE_BASE_REVISION]);
 
+/// A request to enter at the given function from the bootloader.
+#[used]
+#[link_section = ".limine_requests"]
+static LIMINE_ENTRY_POINT_REQUEST: ControlledModificationCell<Request<EntryPointRequest>> =
+    ControlledModificationCell::new(Request::new(EntryPointRequest::new(kbootmain)));
+
 /// A request for the memory map from the bootloader.
 #[used]
-#[no_mangle]
+#[link_section = ".limine_requests"]
 static LIMINE_MEMORY_MAP_REQUEST: ControlledModificationCell<Request<MemoryMapRequest>> =
     ControlledModificationCell::new(Request::new(MemoryMapRequest::new()));
 
 /// A request to obtain the virtual and physical address of the kernel.
 #[used]
-#[no_mangle]
+#[link_section = ".limine_requests"]
 static LIMINE_KERNEL_ADDRESS_REQUEST: ControlledModificationCell<Request<KernelAddressRequest>> =
     ControlledModificationCell::new(Request::new(KernelAddressRequest::new()));
 
@@ -92,6 +98,37 @@ impl<T: LimineResponse> Response<T> {
     pub fn revision(&self) -> u64 {
         self.revision
     }
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EntryPointRequest {
+    entry_point: unsafe extern "C" fn() -> !,
+}
+
+impl EntryPointRequest {
+    pub const fn new(entry_point: unsafe extern "C" fn() -> !) -> Self {
+        Self { entry_point }
+    }
+}
+
+impl LimineRequest for EntryPointRequest {
+    const ID: [u64; 4] = [
+        LIMINE_MAGIC_0,
+        LIMINE_MAGIC_1,
+        0x13d86c035a1cd3e1,
+        0x2b0caa89d8f3026a,
+    ];
+    const REVISION: u64 = 0;
+    type Response = EntryPointResponse;
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct EntryPointResponse();
+
+impl LimineResponse for EntryPointResponse {
+    const REVISION: u64 = 0;
 }
 
 #[repr(transparent)]
