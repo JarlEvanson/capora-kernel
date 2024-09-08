@@ -4,6 +4,14 @@
 #![no_main]
 
 pub mod cells;
+pub mod arch;
+
+/// The architecture independent kernel entry point for the primary CPU.
+///
+/// This is called by the architecture dependent entry code.
+pub fn kmain() -> ! {
+    loop {}
+}
 
 /// Handler of all panics.
 #[cfg_attr(not(test), panic_handler)]
