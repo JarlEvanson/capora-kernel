@@ -281,6 +281,26 @@ impl Page {
     pub const fn base_address(&self) -> VirtualAddress {
         VirtualAddress(self.0 * Self::PAGE_SIZE)
     }
+
+    /// Returns the index into the page map level 1 table.
+    pub const fn pml1e_index(&self) -> u16 {
+        (self.number() & 0x1FF) as u16
+    }
+
+    /// Returns the index into the page map level 2 table.
+    pub const fn pml2e_index(&self) -> u16 {
+        ((self.number() >> 9) & 0x1FF) as u16
+    }
+
+    /// Returns the index into the page map level 3 table.
+    pub const fn pml3e_index(&self) -> u16 {
+        ((self.number() >> 18) & 0x1FF) as u16
+    }
+
+    /// Returns the index into the page map level 4 table.
+    pub const fn pml4e_index(&self) -> u16 {
+        ((self.number() >> 27) & 0x1FF) as u16
+    }
 }
 
 /// A range of contiguous [`Page`]s.
