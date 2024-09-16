@@ -1,10 +1,11 @@
 //! Module controlling booting for the kernel on `x86_64`, parsing bootloader structures and
 //! transferring to [`kmain`].
 
-use core::mem;
+use core::{mem, slice};
 
 use crate::{
     arch::x86_64::{
+        memory::{Frame, FrameRange, FrameRangeIter, PhysicalAddress},
         structures::idt::{load_idt, InterruptStackFrame},
         IDT,
     },
@@ -18,7 +19,7 @@ pub mod capora_boot_stub;
 pub mod limine;
 
 /// The entry point for bootloader-independent `x86_64` specific setup.
-pub fn karchmain() -> ! {
+pub fn karchmain(kernel_address: *const u8, allocator: FrameAllocator) -> ! {
     setup_idt();
 
     let program_headers = get_phdrs();
@@ -26,6 +27,9 @@ pub fn karchmain() -> ! {
         #[cfg(feature = "logging")]
         log::trace!("Program Header {index}: {:?}", program_header);
     }
+
+    #[cfg(feature = "logging")]
+    log::trace!("{allocator:#X?}");
 
     kmain()
 }
@@ -119,4 +123,89 @@ pub fn setup_idt() {
 
 extern "x86-interrupt" fn double_fault_handler(frame: InterruptStackFrame, code: u64) -> ! {
     loop {}
+}
+
+#[derive(Clone, Debug)]
+pub struct FrameAllocator {
+    original: BootloaderMemoryMapIterator,
+    entries: BootloaderMemoryMapIterator,
+    current: FrameRangeIter,
+}
+
+impl FrameAllocator {
+    fn new(entries: BootloaderMemoryMapIterator) -> FrameAllocator {
+        FrameAllocator {
+            original: entries.clone(),
+            entries,
+            current: FrameRangeIter::empty(),
+        }
+    }
+
+    pub fn allocate_frame(&mut self) -> Option<Frame> {
+        let mut next_frame = self.current.next();
+        while next_frame.is_none() {
+            self.current = self.entries.next()?.into_iter();
+            next_frame = self.current.next();
+        }
+
+        next_frame
+    }
+}
+
+#[derive(Clone, Debug)]
+enum BootloaderMemoryMapIterator {
+    #[cfg(feature = "capora-boot-api")]
+    Capora(slice::Iter<'static, boot_api::MemoryMapEntry>),
+    #[cfg(feature = "limine-boot-api")]
+    Limine(slice::Iter<'static, &'static limine::MemoryMapEntry>),
+}
+
+impl Iterator for BootloaderMemoryMapIterator {
+    type Item = FrameRange;
+
+    fn next(&mut self) -> Option<Self::Item> {
+        let (base_address, size) = match self {
+            #[cfg(feature = "capora-boot-api")]
+            Self::Capora(iter) => {
+                let mut entry = iter.next()?;
+                while entry.kind != boot_api::MemoryMapEntryKind::USABLE {
+                    entry = iter.next()?;
+                }
+
+                (entry.base, entry.size)
+            }
+            #[cfg(feature = "limine-boot-api")]
+            Self::Limine(iter) => {
+                let mut entry = iter.next()?;
+                while entry.mem_type != limine::MemoryMapEntryType::USABLE {
+                    entry = iter.next()?;
+                }
+
+                (entry.base, entry.length)
+            }
+        };
+        if size == 0 {
+            return self.next();
+        }
+
+        let Some(base_address) = PhysicalAddress::new(base_address) else {
+            #[cfg(feature = "logging")]
+            log::warn!("Memory map entry outside of valid physical address range");
+            return None;
+        };
+
+        let Some(end_address) = base_address
+            .value()
+            .checked_add(size)
+            .and_then(|end_address| PhysicalAddress::new(end_address - 1))
+        else {
+            #[cfg(feature = "logging")]
+            log::warn!("Memory map entry outside of valid physical address range");
+            return None;
+        };
+        Some(FrameRange::inclusive_range(
+            Frame::containing_address(base_address),
+            Frame::containing_address(end_address),
+        ))
+    }
 }

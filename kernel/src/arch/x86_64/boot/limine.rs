@@ -1,6 +1,9 @@
 //! Module controlling booting using the Limine boot protocol.
 
-use crate::{arch::x86_64::boot::karchmain, cells::ControlledModificationCell};
+use crate::{
+    arch::x86_64::boot::{karchmain, BootloaderMemoryMapIterator, FrameAllocator},
+    cells::ControlledModificationCell,
+};
 
 /// The base revision of the Limine boot protocol that this kernel supports.
 pub const LIMINE_BASE_REVISION: u64 = 2;
@@ -51,7 +54,29 @@ pub unsafe extern "C" fn kbootmain() -> ! {
         loop {}
     }
 
-    karchmain()
+    let Some(memory_map) = LIMINE_MEMORY_MAP_REQUEST
+        .get()
+        .response()
+        .and_then(|response| response.body())
+    else {
+        loop {}
+    };
+    let memory_map: &'static MemoryMapResponse = memory_map;
+
+    let frame_allocator = FrameAllocator::new(BootloaderMemoryMapIterator::Limine(
+        memory_map.as_slice().iter(),
+    ));
+
+    let Some(kernel_virtual_address) = LIMINE_KERNEL_ADDRESS_REQUEST
+        .get()
+        .response()
+        .and_then(|response| response.body())
+    else {
+        loop {}
+    };
+    let kernel_virtual_address = kernel_virtual_address.virtual_base;
+
+    karchmain(kernel_virtual_address as *const u8, frame_allocator)
 }
 
 /// The base structure of a [`LimineRequest`].
@@ -173,7 +198,7 @@ impl LimineResponse for MemoryMapResponse {
 }
 
 impl MemoryMapResponse {
-    pub fn as_slice(&self) -> &[&MemoryMapEntry] {
+    pub fn as_slice(&self) -> &'static [&'static MemoryMapEntry] {
         assert!(!self.entries.is_null());
         let slice = unsafe { core::slice::from_raw_parts(self.entries, self.entry_count as usize) };
         for entry in slice {
@@ -192,9 +217,9 @@ impl MemoryMapResponse {
 #[repr(C)]
 #[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
 pub struct MemoryMapEntry {
-    base: u64,
-    length: u64,
-    mem_type: MemoryMapEntryType,
+    pub base: u64,
+    pub length: u64,
+    pub mem_type: MemoryMapEntryType,
 }
 
 #[repr(transparent)]
