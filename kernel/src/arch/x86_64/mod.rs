@@ -3,6 +3,8 @@
 use structures::idt::InterruptDescriptorTable;
 
 mod boot;
+#[cfg(feature = "debugcon")]
+mod debugcon;
 mod memory;
 mod structures;
 
