@@ -178,6 +178,15 @@ pub struct FrameRangeIter {
     remaining: u64,
 }
 
+impl FrameRangeIter {
+    pub const fn empty() -> Self {
+        Self {
+            frame: Frame::containing_address(PhysicalAddress::zero()),
+            remaining: 0,
+        }
+    }
+}
+
 impl Iterator for FrameRangeIter {
     type Item = Frame;
 
@@ -382,6 +391,15 @@ impl IntoIterator for PageRange {
 pub struct PageRangeIter {
     page: Page,
     remaining: usize,
+}
+
+impl PageRangeIter {
+    pub const fn empty() -> Self {
+        Self {
+            page: Page::containing_address(VirtualAddress::zero()),
+            remaining: 0,
+        }
+    }
 }
 
 impl Iterator for PageRangeIter {
