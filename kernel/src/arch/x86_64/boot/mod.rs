@@ -5,7 +5,9 @@ use core::{mem, slice};
 
 use crate::{
     arch::x86_64::{
-        memory::{Frame, FrameRange, FrameRangeIter, PhysicalAddress},
+        memory::{
+            Frame, FrameRange, FrameRangeIter, Page, PageRange, PhysicalAddress, VirtualAddress,
+        },
         structures::idt::{load_idt, InterruptStackFrame},
         IDT,
     },
@@ -22,10 +24,52 @@ pub mod limine;
 pub fn karchmain(kernel_address: *const u8, allocator: FrameAllocator) -> ! {
     setup_idt();
 
+    let mut pml4e_index = 512;
+    let mut pml3e_index = 512;
+    let mut pml2e_index = 512;
+
+    let mut page_table_page_count: usize = 1;
+    let mut kernel_backing_frame_count: usize = 0;
+
     let program_headers = get_phdrs();
     for (index, program_header) in program_headers.iter().enumerate() {
         #[cfg(feature = "logging")]
         log::trace!("Program Header {index}: {:?}", program_header);
+
+        if program_header.segment_type() != 1 {
+            continue;
+        }
+
+        let page = Page::containing_address(VirtualAddress::new_canonical(
+            kernel_address as usize + program_header.virtual_address() as usize,
+        ));
+        let end_page = Page::containing_address(VirtualAddress::new_canonical(
+            (kernel_address as u64
+                + program_header.virtual_address()
+                + (program_header.memory_size() - 1)) as usize,
+        ));
+        let page_range = PageRange::inclusive_range(page, end_page).unwrap();
+
+        for page in page_range {
+            if page.pml4e_index() != pml4e_index {
+                pml4e_index = page.pml4e_index();
+                page_table_page_count += 1;
+
+                pml3e_index = 512;
+                pml2e_index = 512;
+            }
+            if page.pml3e_index() != pml3e_index {
+                pml3e_index = page.pml3e_index();
+                page_table_page_count += 1;
+
+                pml2e_index = 512;
+            }
+            if page.pml2e_index() != pml2e_index {
+                pml2e_index = page.pml2e_index();
+                page_table_page_count += 1;
+            }
+        }
+        kernel_backing_frame_count += page_range.size_in_pages();
     }
 
     #[cfg(feature = "logging")]
