@@ -4,15 +4,18 @@ OUTPUT_ARCH(i386:x86-64)
 ENTRY(_start)
 
 PHDRS {
-    rodata          PT_LOAD     FLAGS(4)    ;
-    text            PT_LOAD     FLAGS(1 | 4);
-    data            PT_LOAD     FLAGS(2 | 4);
-    dynamic         PT_DYNAMIC              ;
-    boot_request    0x69B2Ba6E              ;
+    headers         PT_PHDR  PHDRS              ;
+    rodata          PT_LOAD  PHDRS  FLAGS(4)    ;
+    text            PT_LOAD         FLAGS(1 | 4);
+    data            PT_LOAD         FLAGS(2 | 4);
+    dynamic         PT_DYNAMIC                  ;
+    boot_request    0x69B2Ba6E                  ;
 }
 
 SECTIONS {
-    . = ALIGN(CONSTANT(COMMONPAGESIZE));
+    phdrs_start = . + 64; /* Skip the ELF file header. */
+    . += SIZEOF_HEADERS;
+    phdrs_end = .;
 
     .rodata : {
         *(.rodata .rodata.*)
