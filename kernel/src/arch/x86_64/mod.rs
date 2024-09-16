@@ -5,6 +5,8 @@ use structures::idt::InterruptDescriptorTable;
 mod boot;
 #[cfg(feature = "debugcon")]
 mod debugcon;
+#[cfg(feature = "logging")]
+pub mod logging;
 mod memory;
 mod structures;
 

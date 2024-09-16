@@ -14,5 +14,8 @@ static mut BOOTLOADER_REQUEST: BootloaderRequest = BootloaderRequest {
 /// The entry point when booting using `capora-boot-api` protocol.
 #[export_name = "_start"]
 pub unsafe extern "C" fn kbootmain(response: *const BootloaderResponse) -> ! {
+    #[cfg(feature = "logging")]
+    crate::logging::init_logging();
+
     karchmain()
 }

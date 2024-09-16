@@ -38,6 +38,9 @@ static LIMINE_KERNEL_ADDRESS_REQUEST: ControlledModificationCell<Request<KernelA
 /// The entry point when using the Limine boot protocol.
 #[cfg_attr(not(feature = "capora-boot-api"), export_name = "_start")]
 pub unsafe extern "C" fn kbootmain() -> ! {
+    #[cfg(feature = "logging")]
+    crate::logging::init_logging();
+
     if LIMINE_BASE_REVISION_TAG.get()[2] == LIMINE_BASE_REVISION {
         loop {}
     }

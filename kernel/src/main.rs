@@ -6,6 +6,8 @@
 
 pub mod arch;
 pub mod cells;
+#[cfg(feature = "logging")]
+pub mod logging;
 pub mod spinlock;
 
 /// The architecture independent kernel entry point for the primary CPU.
