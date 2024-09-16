@@ -173,6 +173,7 @@ impl IntoIterator for FrameRange {
 }
 
 /// An [`Iterator`] over the [`Frame`]s that make up the [`FrameRange`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct FrameRangeIter {
     frame: Frame,
     remaining: u64,
@@ -388,6 +389,7 @@ impl IntoIterator for PageRange {
 }
 
 /// An [`Iterator`] over the [`Page`]s that make up the [`PageRange`].
+#[derive(Clone, Debug, Hash, PartialEq, Eq)]
 pub struct PageRangeIter {
     page: Page,
     remaining: usize,
