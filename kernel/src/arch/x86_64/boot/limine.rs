@@ -35,6 +35,12 @@ static LIMINE_MEMORY_MAP_REQUEST: ControlledModificationCell<Request<MemoryMapRe
 static LIMINE_KERNEL_ADDRESS_REQUEST: ControlledModificationCell<Request<KernelAddressRequest>> =
     ControlledModificationCell::new(Request::new(KernelAddressRequest::new()));
 
+/// A request to obtain the offset of the higher half memory direct map.
+#[used]
+#[link_section = ".limine_requests"]
+static LIMINE_HIGHER_DIRECT_MAP_REQUEST: ControlledModificationCell<Request<DirectMapRequest>> =
+    ControlledModificationCell::new(Request::new(DirectMapRequest::new()));
+
 /// The entry point when using the Limine boot protocol.
 #[cfg_attr(not(feature = "capora-boot-api"), export_name = "_start")]
 pub unsafe extern "C" fn kbootmain() -> ! {
@@ -250,4 +256,35 @@ pub trait LimineRequest {
 pub trait LimineResponse {
     /// The revision of the response that the kernel supports.
     const REVISION: u64;
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DirectMapRequest();
+
+impl DirectMapRequest {
+    pub const fn new() -> Self {
+        Self()
+    }
+}
+
+impl LimineRequest for DirectMapRequest {
+    const ID: [u64; 4] = [
+        LIMINE_MAGIC_0,
+        LIMINE_MAGIC_1,
+        0x48dcf1cb8ad2b852,
+        0x63984e959a98244b,
+    ];
+    const REVISION: u64 = 0;
+    type Response = DirectMapResponse;
+}
+
+#[repr(transparent)]
+#[derive(Clone, Copy, Debug, Hash, PartialEq, Eq, PartialOrd, Ord)]
+pub struct DirectMapResponse {
+    offset: u64,
+}
+
+impl LimineResponse for DirectMapResponse {
+    const REVISION: u64 = 0;
 }
