@@ -66,16 +66,18 @@ checksum = "b048fb63fd8b5923fc5aa7b340d8e156aec7ec02f0c78fa8a6ddc2613f6f71de"
 [[package]]
 name = "boot-api"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-api.git#fbc3c1507dbe7754d238f597c382ed6926c2f00c"
+source = "git+https://github.com/JarlEvanson/capora-boot-api.git#25be3d6f3596bf8fcc8651863ae37fe314a036a7"
 
 [[package]]
 name = "boot-stub"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#7075d8a798eadb3c1e3906bb9a82ec00264fd412"
 dependencies = [
  "boot-api",
  "config",
  "elf",
+ "log",
+ "simple-psf",
  "uefi",
 ]
 
@@ -121,7 +123,7 @@ checksum = "d3fd119d74b830634cea2a0f58bbd0d54540518a14397557951e79340abc28c0"
 [[package]]
 name = "config"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#7075d8a798eadb3c1e3906bb9a82ec00264fd412"
 dependencies = [
  "clap",
  "config-raw",
@@ -131,7 +133,7 @@ dependencies = [
 [[package]]
 name = "config-raw"
 version = "0.1.0"
-source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#4f069c3ae601d338b75042b8e543213a6ed60683"
+source = "git+https://github.com/JarlEvanson/capora-boot-stub.git#7075d8a798eadb3c1e3906bb9a82ec00264fd412"
 
 [[package]]
 name = "elf"
@@ -241,6 +243,12 @@ dependencies = [
  "linux-raw-sys",
  "windows-sys 0.52.0",
 ]
+
+[[package]]
+name = "simple-psf"
+version = "0.1.2"
+source = "registry+https://github.com/rust-lang/crates.io-index"
+checksum = "8dfb5d24f130ce16dd7e608140773454eb92d69191c258e8af9d811bcab03f1d"
 
 [[package]]
 name = "strsim"
