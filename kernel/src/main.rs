@@ -19,7 +19,13 @@ pub fn kmain() -> ! {
 
 /// Handler of all panics.
 #[cfg_attr(not(test), panic_handler)]
-fn panic_handler(_: &core::panic::PanicInfo) -> ! {
+fn panic_handler(info: &core::panic::PanicInfo) -> ! {
+    #[cfg(feature = "logging")]
+    log::error!("PANIC OCCURRED: {info}");
+
+    #[cfg(not(feature = "logging"))]
+    core::hint::black_box(info);
+
     loop {
         core::hint::spin_loop()
     }
