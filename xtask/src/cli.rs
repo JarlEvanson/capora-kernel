@@ -85,11 +85,9 @@ pub fn parse_build_arguments(matches: &mut clap::ArgMatches) -> BuildArguments {
         .map(String::as_str)
         .flat_map(|s| parse_feature(&s))
     {
-        let new_feature = match feature {
-            "limine-boot-api" => Features::LIMINE_BOOT_API,
-            "capora-boot-api" => Features::CAPORA_BOOT_API,
-            "debugcon" => Features::DEBUGCON,
-            feature => {
+        let new_feature = match Features::str_to_feature(feature) {
+            Some(feature) => feature,
+            None => {
                 eprintln!("unsupported feature `{feature}`");
                 std::process::exit(1);
             }
@@ -250,27 +248,31 @@ impl Features {
     /// Enables the `capora-boot-api` feature, which enables support for booting via the
     /// `capora-boot-api` protocol.
     pub const CAPORA_BOOT_API: Self = Self(0x2);
-    
+
     /// Enables the `debugcon` feature, which enables support for using the `debugcon` device in
     /// the kernel.
     pub const DEBUGCON: Self = Self(0x4);
 }
 
 impl Features {
+    /// Converts a [`str`] into its corresponding [`Features`] flag, returning [`None`] if it does
+    /// not match a feature.
+    pub fn str_to_feature(s: &str) -> Option<Features> {
+        match s {
+            "limine-boot-api" => Some(Self::LIMINE_BOOT_API),
+            "capora-boot-api" => Some(Self::CAPORA_BOOT_API),
+            "debugcon" => Some(Self::DEBUGCON),
+            _ => None,
+        }
+    }
+
     /// Converts [`Features`] into a comma seperated string of the features.
     pub fn as_string(&self) -> String {
         let features = *self;
         let features = ["limine-boot-api", "capora-boot-api", "debugcon"]
             .into_iter()
-            .filter(move |&f| {
-                !(f == "limine-boot-api"
-                    && features & Features::LIMINE_BOOT_API != Features::LIMINE_BOOT_API)
-            })
-            .filter(move |&f| {
-                !(f == "capora-boot-api"
-                    && features & Features::CAPORA_BOOT_API != Features::CAPORA_BOOT_API)
-            }).filter(move |&f| {
-                !(f == "debugcon" && features & Features::DEBUGCON != Features::DEBUGCON)
+            .filter(|&f| {
+                Self::str_to_feature(f).is_some_and(|feature| features & feature == feature)
             });
 
         features.collect::<Vec<_>>().join(",")
