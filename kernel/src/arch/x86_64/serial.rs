@@ -418,6 +418,7 @@ fn outb(port: u16, byte: u8) {
             "out dx, al",
             in("dx") port,
             in("al") byte,
+            options(nomem, nostack, preserves_flags)
         );
     }
 }
@@ -427,9 +428,10 @@ fn inb(port: u16) -> u8 {
 
     unsafe {
         core::arch::asm!(
-            "out dx, al",
+            "in al, dx",
             in("dx") port,
             out("al") byte,
+            options(nomem, nostack, preserves_flags)
         );
     }
 
