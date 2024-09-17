@@ -3,7 +3,7 @@
 use structures::idt::InterruptDescriptorTable;
 
 mod boot;
-#[cfg(feature = "debugcon")]
+#[cfg(feature = "debugcon-logging")]
 mod debugcon;
 #[cfg(feature = "logging")]
 pub mod logging;

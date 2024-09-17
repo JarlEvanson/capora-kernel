@@ -251,7 +251,7 @@ impl Features {
 
     /// Enables the `debugcon` feature, which enables support for using the `debugcon` device in
     /// the kernel.
-    pub const DEBUGCON: Self = Self(0x4);
+    pub const DEBUGCON_LOGGING: Self = Self(0x4);
 
     /// Enables the `logging` feature, which enables support for loggingg within the kernel.
     pub const LOGGING: Self = Self(0x8);
@@ -264,7 +264,7 @@ impl Features {
         match s {
             "limine-boot-api" => Some(Self::LIMINE_BOOT_API),
             "capora-boot-api" => Some(Self::CAPORA_BOOT_API),
-            "debugcon" => Some(Self::DEBUGCON),
+            "debugcon-logging" => Some(Self::DEBUGCON_LOGGING),
             "logging" => Some(Self::LOGGING),
             _ => None,
         }
@@ -273,11 +273,14 @@ impl Features {
     /// Converts [`Features`] into a comma seperated string of the features.
     pub fn as_string(&self) -> String {
         let features = *self;
-        let features = ["limine-boot-api", "capora-boot-api", "debugcon", "logging"]
-            .into_iter()
-            .filter(|&f| {
-                Self::str_to_feature(f).is_some_and(|feature| features & feature == feature)
-            });
+        let features = [
+            "limine-boot-api",
+            "capora-boot-api",
+            "debugcon-logging",
+            "logging",
+        ]
+        .into_iter()
+        .filter(|&f| Self::str_to_feature(f).is_some_and(|feature| features & feature == feature));
 
         features.collect::<Vec<_>>().join(",")
     }

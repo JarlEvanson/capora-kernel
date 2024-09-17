@@ -2,7 +2,7 @@
 
 use core::fmt::Write;
 
-#[cfg(not(any(feature = "debugcon")))]
+#[cfg(not(any(feature = "debugcon-logging")))]
 compile_error!("Kernel logging must have an output method");
 
 /// Initializes architecture specific logging mechanisms.
@@ -24,7 +24,7 @@ impl log::Log for ArchitectureLogger {
     }
 
     fn log(&self, record: &log::Record) {
-        #[cfg(feature = "debugcon")]
+        #[cfg(feature = "debugcon-logging")]
         let _ = writeln!(
             crate::arch::x86_64::debugcon::acquire_debugcon(),
             "[{:?}] {}",
