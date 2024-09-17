@@ -8,6 +8,8 @@ mod debugcon;
 #[cfg(feature = "logging")]
 pub mod logging;
 mod memory;
+#[cfg(feature = "serial-logging")]
+mod serial;
 mod structures;
 
 static mut IDT: InterruptDescriptorTable = InterruptDescriptorTable::new();
