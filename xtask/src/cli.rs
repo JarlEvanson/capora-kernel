@@ -252,9 +252,12 @@ impl Features {
     /// Enables the `debugcon` feature, which enables support for using the `debugcon` device in
     /// the kernel.
     pub const DEBUGCON_LOGGING: Self = Self(0x4);
+    /// Enables the `debugcon` feature, which enables support for using the `debugcon` device in
+    /// the kernel.
+    pub const SERIAL_LOGGING: Self = Self(0x8);
 
     /// Enables the `logging` feature, which enables support for loggingg within the kernel.
-    pub const LOGGING: Self = Self(0x8);
+    pub const LOGGING: Self = Self(0x16);
 }
 
 impl Features {
@@ -265,6 +268,7 @@ impl Features {
             "limine-boot-api" => Some(Self::LIMINE_BOOT_API),
             "capora-boot-api" => Some(Self::CAPORA_BOOT_API),
             "debugcon-logging" => Some(Self::DEBUGCON_LOGGING),
+            "serial-logging" => Some(Self::SERIAL_LOGGING),
             "logging" => Some(Self::LOGGING),
             _ => None,
         }
@@ -277,6 +281,7 @@ impl Features {
             "limine-boot-api",
             "capora-boot-api",
             "debugcon-logging",
+            "serial-logging",
             "logging",
         ]
         .into_iter()

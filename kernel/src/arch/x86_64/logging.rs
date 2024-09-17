@@ -2,7 +2,7 @@
 
 use core::fmt::Write;
 
-#[cfg(not(any(feature = "debugcon-logging")))]
+#[cfg(not(any(feature = "debugcon-logging", feature = "serial-logging")))]
 compile_error!("Kernel logging must have an output method");
 
 /// Initializes architecture specific logging mechanisms.

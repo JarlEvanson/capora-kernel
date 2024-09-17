@@ -15,6 +15,7 @@ limine-boot-api = []
 
 logging = ["dep:log"]
 debugcon-logging = ["logging"]
+serial-logging = ["logging"]
 
 [dependencies]
 boot-api = { git = "https://github.com/JarlEvanson/capora-boot-api.git", optional = true }
