@@ -10,8 +10,6 @@ repository.workspace = true
 workspace = true
 
 [features]
-default = [ "capora-boot-api", "limine-boot-api" ]
-
 capora-boot-api = ["dep:boot-api"]
 limine-boot-api = []
 

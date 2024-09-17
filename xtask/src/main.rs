@@ -6,7 +6,7 @@ use std::{
     path::{Path, PathBuf},
 };
 
-use cli::{parse_arguments, Action, Arch, BuildArguments, RunArguments};
+use cli::{parse_arguments, Action, Arch, BuildArguments, Features, RunArguments};
 
 pub mod cli;
 
@@ -89,7 +89,7 @@ impl fmt::Display for BuildError {
 
 /// Builds and runs the Capora kernel using the Limine bootloader.
 pub fn run_limine(
-    build_args: BuildArguments,
+    mut build_args: BuildArguments,
     run_args: RunArguments,
     limine_path: PathBuf,
 ) -> Result<(), RunLimineError> {
@@ -100,6 +100,8 @@ pub fn run_limine(
             \tprotocol: limine\n\
             \tkernel_path: boot():/kernel
     ";
+
+    build_args.features = build_args.features | Features::LIMINE_BOOT_API;
 
     let kernel_path = build(build_args)?;
     let fat_directory = build_fat_directory(
@@ -153,9 +155,11 @@ impl fmt::Display for RunLimineError {
 
 /// Builds and runs the Capora kernel using `capora-boot-stub`.
 pub fn run_boot_stub(
-    build_args: BuildArguments,
+    mut build_args: BuildArguments,
     run_args: RunArguments,
 ) -> Result<(), RunBootStubError> {
+    build_args.features = build_args.features | Features::CAPORA_BOOT_API;
+
     let kernel_path = build(build_args)?;
     let fat_directory = build_fat_directory(
         build_args.arch,
